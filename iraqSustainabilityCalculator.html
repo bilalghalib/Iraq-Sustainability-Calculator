@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Iraq Energy Consumption and Improvement Audit</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                background-color: #f4f4f4;
+            }
+            .container {
+                max-width: 900px;
+                margin: auto;
+                background: white;
+                padding: 20px 40px;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            h1, h2, h3 {
+                color: #333;
+            }
+            .section {
+                margin-bottom: 30px;
+            }
+            .input-group {
+                margin-bottom: 15px;
+            }
+            .input-group label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .input-description {
+                font-size: 0.9em;
+                color: #666;
+                margin-bottom: 5px;
+            }
+            input[type="number"], input[type="text"], select {
+                width: 100%;
+                padding: 7px;
+                margin-bottom: 10px;
+                box-sizing: border-box;
+            }
+            button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-right: 10px;
+                margin-bottom: 20px;
+            }
+            button:hover {
+                background-color: #45a049;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+                overflow-x: auto;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+                vertical-align: top;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+            .results-section {
+                margin-top: 30px;
+            }
+            .chart-container {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                margin-bottom: 30px;
+            }
+            .chart-wrapper {
+                flex: 1 1 60%;
+                min-width: 300px;
+            }
+            .small-chart {
+                flex: 1 1 35%;
+                max-width: 400px;
+            }
+            @media (max-width: 768px) {
+                .chart-container {
+                    flex-direction: column;
+                }
+                .chart-wrapper, .small-chart {
+                    flex: 1 1 100%;
+                    max-width: 100%;
+                }
+            }
+            .hidden {
+                display: none;
+            }
+            .gap-alert {
+                color: red;
+                font-weight: bold;
+            }
+            .intervention {
+                margin-bottom: 20px;
+                padding: 15px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background-color: #fafafa;
+            }
+            .table-responsive {
+                overflow-x: auto;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Iraq Energy Consumption and Improvement Audit</h1>
+            <p>This tool helps you estimate your energy consumption and potential savings from various interventions. Input your data in each section to see updates of your energy profile and potential improvements.</p>
+            
+            <div id="charts" class="chart-container">
+                <div class="chart-wrapper">
+                    <canvas id="paybackChart"></canvas>
+                </div>
+                <div class="chart-wrapper small-chart">
+                    <canvas id="energyBreakdownChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>1. Total Energy Consumption and Cost Data</h2>
+            <h3>Government Energy Data</h3>
+            <div class="input-group">
+                <label for="govConsumption">Total Annual Energy Consumption from Government Grid (kWh)</label>
+                <div class="input-description">Enter the total amount of energy consumed from the government grid in a year.</div>
+                <input type="number" id="govConsumption" placeholder="e.g., 3000" value="3000">
+            </div>
+            <div class="input-group">
+                <label for="govCostPerKWh">Cost per kWh from Government Grid (IQD)</label>
+                <div class="input-description">Enter the cost per kilowatt-hour for electricity supplied by the government.</div>
+                <input type="number" id="govCostPerKWh" placeholder="e.g., 50" value="50">
+            </div>
+            <p>Total annual energy cost from government grid (IQD): <span id="govTotalCost">0</span></p>
+
+            <h3>Generator Energy Data</h3>
+            <div class="input-group">
+                <label for="genConsumption">Total Annual Energy Consumption from Generators (kWh)</label>
+                <div class="input-description">Enter the total amount of energy consumed from generators in a year.</div>
+                <input type="number" id="genConsumption" placeholder="e.g., 1000" value="1000">
+            </div>
+            <div class="input-group">
+                <label for="genCostPerKWh">Cost per kWh from Generators (IQD)</label>
+                <div class="input-description">Enter the cost per kilowatt-hour for electricity supplied by generators.</div>
+                <input type="number" id="genCostPerKWh" placeholder="e.g., 200" value="200">
+            </div>
+            <p>Total annual generator energy cost (IQD): <span id="genTotalCost">0</span></p>
+
+            <h3>Combined Energy Data</h3>
+            <p>Total annual energy consumption (kWh): <span id="totalConsumption">0</span></p>
+            <p>Average cost per kWh (IQD): <span id="avgCostPerKWh">0</span></p>
+            <p>Total annual energy cost (IQD): <span id="totalEnergyCost">0</span></p>
+        </div>
+
+        <div class="section">
+            <h2>2. Energy Consumption Audit</h2>
+            <h3>Lighting</h3>
+            <table id="lightingTable">
+                <tr>
+                    <th>Room Type</th>
+                    <th>Number of Rooms</th>
+                    <th>Bulbs per Room</th>
+                    <th>Bulb Type</th>
+                    <th>Wattage</th>
+                    <th>Hours Used per Day</th>
+                </tr>
+                <tr>
+                    <td><input type="text" value="Living Room"></td>
+                    <td><input type="number" class="roomNum" value="1"></td>
+                    <td><input type="number" class="bulbNum" value="4"></td>
+                    <td>
+                        <select class="bulbType">
+                            <option value="incandescent">Incandescent</option>
+                            <option value="led">LED</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="wattage" value="60"></td>
+                    <td><input type="number" class="hoursUsed" value="6"></td>
+                </tr>
+            </table>
+            <button onclick="addLightingRow()">Add Lighting Row</button>
+            <p>Total annual lighting energy consumption (kWh): <span id="totalLightingConsumption">0</span></p>
+            <p>Total annual lighting energy cost (IQD): <span id="totalLightingCost">0</span></p>
+
+            <h3>Appliances</h3>
+            <table id="applianceTable">
+                <tr>
+                    <th>Appliance Type</th>
+                    <th>Number</th>
+                    <th>Wattage</th>
+                    <th>Hours Used per Day</th>
+                </tr>
+                <tr>
+                    <td><input type="text" value="Refrigerator" readonly></td>
+                    <td><input type="number" class="appNum" value="1" readonly></td>
+                    <td><input type="number" class="appWattage" value="150" readonly></td>
+                    <td><input type="number" class="appHoursUsed" value="24" readonly></td>
+                </tr>
+                <tr>
+                    <td><input type="text" value="Air Conditioner"></td>
+                    <td><input type="number" class="appNum" value="2"></td>
+                    <td><input type="number" class="appWattage" value="2000"></td>
+                    <td><input type="number" class="appHoursUsed" value="8"></td>
+                </tr>
+            </table>
+            <button onclick="addApplianceRow()">Add Appliance Row</button>
+            <p>Total annual appliance energy consumption (kWh): <span id="totalApplianceConsumption">0</span></p>
+            <p>Total annual appliance energy cost (IQD): <span id="totalApplianceCost">0</span></p>
+
+            <h3>Total Calculated Consumption vs. Input Consumption</h3>
+            <p>Total annual energy consumption from government and generators (kWh): <span id="inputTotalConsumption">0</span></p>
+            <p>Total annual energy consumption calculated from appliances (kWh): <span id="calculatedTotalConsumption">0</span></p>
+            <p>Difference (kWh): <span id="consumptionDifference">0</span></p>
+            <p id="gapAlert" class="gap-alert hidden">There is a significant gap in your energy consumption data. Please check if any appliances are missing from the audit.</p>
+        </div>
+
+        <div class="section">
+            <h2>3. Sustainability Interventions</h2>
+            <div id="interventions">
+                <div class="intervention">
+                    <h3>LED Lighting</h3>
+                    <input type="checkbox" id="ledLighting">
+                    <label for="ledLighting">Implement LED Lighting</label>
+                    <div class="input-group">
+                        <label for="ledCost">Implementation Cost (IQD)</label>
+                        <input type="number" id="ledCost" placeholder="e.g., 300000" value="300000">
+                    </div>
+                    <div class="input-group">
+                        <label for="ledSavingsPercent">Expected Savings (%)</label>
+                        <input type="number" id="ledSavingsPercent" placeholder="e.g., 60" value="60">
+                    </div>
+                </div>
+                <div class="intervention">
+                    <h3>Cool Roof</h3>
+                    <input type="checkbox" id="coolRoof">
+                    <label for="coolRoof">Add Cool Roof or Insulation</label>
+                    <div class="input-group">
+                        <label for="coolRoofCost">Implementation Cost (IQD)</label>
+                        <input type="number" id="coolRoofCost" placeholder="e.g., 600000" value="600000">
+                    </div>
+                    <div class="input-group">
+                        <label for="coolRoofSavingsPercent">Expected Savings (%)</label>
+                        <input type="number" id="coolRoofSavingsPercent" placeholder="e.g., 12" value="12">
+                    </div>
+                </div>
+                <div class="intervention">
+                    <h3>Wall Insulation</h3>
+                    <input type="checkbox" id="wallInsulation">
+                    <label for="wallInsulation">Improve Wall Insulation</label>
+                    <div class="input-group">
+                        <label for="wallInsulationCost">Implementation Cost (IQD)</label>
+                        <input type="number" id="wallInsulationCost" placeholder="e.g., 600000" value="600000">
+                    </div>
+                    <div class="input-group">
+                        <label for="wallInsulationSavingsPercent">Expected Savings (%)</label>
+                        <input type="number" id="wallInsulationSavingsPercent" placeholder="e.g., 15" value="15">
+                    </div>
+                </div>
+                <div class="intervention">
+                    <h3>Reflective Windows</h3>
+                    <input type="checkbox" id="reflectiveWindows">
+                    <label for="reflectiveWindows">Install Reflective Windows</label>
+                    <div class="input-group">
+                        <label for="windowCost">Implementation Cost per Window (IQD)</label>
+                        <input type="number" id="windowCost" placeholder="e.g., 300000" value="300000">
+                    </div>
+                    <div class="input-group">
+                        <label for="numWindows">Number of Windows</label>
+                        <input type="number" id="numWindows" placeholder="e.g., 10" value="10">
+                    </div>
+                    <div class="input-group">
+                        <label for="windowSavingsPercent">Expected Savings (%)</label>
+                        <input type="number" id="windowSavingsPercent" placeholder="e.g., 7" value="7">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="calculateResults()">Calculate Results</button>
+        <button onclick="resetForm()">Reset Form</button>
+
+        <div id="results" class="results-section hidden">
+            <h2>4. Results Summary</h2>
+            <p>Total Annual Energy Consumption (kWh): <span id="summaryTotalConsumption">0</span></p>
+            <p>Average Cost per kWh (IQD): <span id="summaryAvgCostPerKWh">0</span></p>
+            <p>Total Annual Energy Cost (IQD): <span id="summaryTotalEnergyCost">0</span></p>
+            <p>Total Investment Cost (IQD): <span id="totalInvestmentCost">0</span></p>
+            <p>Total Annual Energy Savings (IQD): <span id="totalEnergySavings">0</span></p>
+            <p>New Annual Energy Cost (IQD): <span id="newEnergyCost">0</span></p>
+            <p>Payback Period (Years): <span id="paybackPeriod">0</span></p>
+            <p>Total CO₂ Emissions Saved (kg CO₂/year): <span id="totalCO2Saved">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        function addLightingRow() {
+            const table = document.getElementById('lightingTable');
+            const newRow = table.insertRow(-1);
+            newRow.innerHTML = `
+                <td><input type="text" value="New Room"></td>
+                <td><input type="number" class="roomNum" value="1"></td>
+                <td><input type="number" class="bulbNum" value="1"></td>
+                <td>
+                    <select class="bulbType">
+                        <option value="incandescent">Incandescent</option>
+                        <option value="led">LED</option>
+                    </select>
+                </td>
+                <td><input type="number" class="wattage" value="60"></td>
+                <td><input type="number" class="hoursUsed" value="1"></td>
+            `;
+            addEventListenersToRow(newRow);
+        }
+
+        function addApplianceRow() {
+            const table = document.getElementById('applianceTable');
+            const newRow = table.insertRow(-1);
+            newRow.innerHTML = `
+                <td><input type="text" value="New Appliance"></td>
+                <td><input type="number" class="appNum" value="1"></td>
+                <td><input type="number" class="appWattage" value="100"></td>
+                <td><input type="number" class="appHoursUsed" value="1"></td>
+            `;
+            addEventListenersToRow(newRow);
+        }
+
+        function addEventListenersToRow(row) {
+            row.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('input', calculateResults);
+            });
+        }
+
+        function calculateResults() {
+            // Calculate total energy consumption and cost
+            const govConsumption = parseFloat(document.getElementById('govConsumption').value) || 0;
+            const govCostPerKWh = parseFloat(document.getElementById('govCostPerKWh').value) || 0;
+            const genConsumption = parseFloat(document.getElementById('genConsumption').value) || 0;
+            const genCostPerKWh = parseFloat(document.getElementById('genCostPerKWh').value) || 0;
+
+            const govTotalCost = govConsumption * govCostPerKWh;
+            const genTotalCost = genConsumption * genCostPerKWh;
+            const totalConsumption = govConsumption + genConsumption;
+            const totalEnergyCost = govTotalCost + genTotalCost;
+            const avgCostPerKWh = totalConsumption > 0 ? totalEnergyCost / totalConsumption : 0;
+
+            document.getElementById('govTotalCost').textContent = govTotalCost.toFixed(2);
+            document.getElementById('genTotalCost').textContent = genTotalCost.toFixed(2);
+            document.getElementById('totalConsumption').textContent = totalConsumption.toFixed(2);
+            document.getElementById('avgCostPerKWh').textContent = avgCostPerKWh.toFixed(2);
+            document.getElementById('totalEnergyCost').textContent = totalEnergyCost.toFixed(2);
+
+            // Display input total consumption
+            document.getElementById('inputTotalConsumption').textContent = totalConsumption.toFixed(2);
+
+            // Calculate total energy consumption for appliances and lighting
+            let totalApplianceConsumption = 0;
+            let totalApplianceCost = 0;
+            let energyBreakdownData = [];
+            const applianceRows = document.getElementById('applianceTable').rows;
+            for (let i = 1; i < applianceRows.length; i++) {
+                const row = applianceRows[i];
+                const applianceName = row.cells[0].getElementsByTagName('input')[0].value || 'Appliance ' + i;
+                const number = parseFloat(row.cells[1].getElementsByTagName('input')[0].value) || 0;
+                const wattage = parseFloat(row.cells[2].getElementsByTagName('input')[0].value) || 0;
+                const hours = parseFloat(row.cells[3].getElementsByTagName('input')[0].value) || 0;
+
+                const annualConsumption = number * wattage * hours * 365 / 1000; // kWh/year
+                const annualCost = annualConsumption * avgCostPerKWh;
+
+                totalApplianceConsumption += annualConsumption;
+                totalApplianceCost += annualCost;
+
+                energyBreakdownData.push({ name: applianceName, consumption: annualConsumption });
+            }
+            document.getElementById('totalApplianceConsumption').textContent = totalApplianceConsumption.toFixed(2);
+            document.getElementById('totalApplianceCost').textContent = totalApplianceCost.toFixed(2);
+
+            // Calculate lighting consumption and costs
+            let totalLightingConsumption = 0;
+            let totalLightingCost = 0;
+            const lightingRows = document.getElementById('lightingTable').rows;
+            for (let i = 1; i < lightingRows.length; i++) {
+                const row = lightingRows[i];
+                const roomType = row.cells[0].getElementsByTagName('input')[0].value || 'Room ' + i;
+                const rooms = parseFloat(row.cells[1].getElementsByTagName('input')[0].value) || 0;
+                const bulbs = parseFloat(row.cells[2].getElementsByTagName('input')[0].value) || 0;
+                const wattage = parseFloat(row.cells[4].getElementsByTagName('input')[0].value) || 0;
+                const hours = parseFloat(row.cells[5].getElementsByTagName('input')[0].value) || 0;
+
+                const annualConsumption = rooms * bulbs * wattage * hours * 365 / 1000; // kWh/year
+                const annualCost = annualConsumption * avgCostPerKWh;
+
+                totalLightingConsumption += annualConsumption;
+                totalLightingCost += annualCost;
+
+                energyBreakdownData.push({ name: `Lighting: ${roomType}`, consumption: annualConsumption });
+            }
+            document.getElementById('totalLightingConsumption').textContent = totalLightingConsumption.toFixed(2);
+            document.getElementById('totalLightingCost').textContent = totalLightingCost.toFixed(2);
+
+            // Sum up total energy consumption and cost
+            const totalCalculatedConsumption = totalApplianceConsumption + totalLightingConsumption;
+            const totalCalculatedCost = totalApplianceCost + totalLightingCost;
+
+            // Update calculated total consumption
+            document.getElementById('calculatedTotalConsumption').textContent = totalCalculatedConsumption.toFixed(2);
+
+            // Calculate difference
+            const consumptionDifference = totalConsumption - totalCalculatedConsumption;
+            document.getElementById('consumptionDifference').textContent = consumptionDifference.toFixed(2);
+
+            // Display gap alert if difference is significant
+            const gapAlert = document.getElementById('gapAlert');
+            if (Math.abs(consumptionDifference) > 100) {
+                gapAlert.classList.remove('hidden');
+            } else {
+                gapAlert.classList.add('hidden');
+            }
+
+            // Update summary
+            document.getElementById('summaryTotalConsumption').textContent = totalCalculatedConsumption.toFixed(2);
+            document.getElementById('summaryAvgCostPerKWh').textContent = avgCostPerKWh.toFixed(2);
+            document.getElementById('summaryTotalEnergyCost').textContent = totalCalculatedCost.toFixed(2);
+
+            // Interventions calculations
+            let totalInvestmentCost = 0;
+            let totalEnergySavingsAmount = 0;
+            let totalCO2Saved = 0;
+            const CO2EmissionFactor = 0.7; // kg CO2 per kWh
+
+            // LED Lighting Intervention
+            if (document.getElementById('ledLighting').checked) {
+                const ledCost = parseFloat(document.getElementById('ledCost').value) || 0;
+                const ledSavingsPercent = parseFloat(document.getElementById('ledSavingsPercent').value) || 0;
+                totalInvestmentCost += ledCost;
+
+                const lightingEnergySavings = totalLightingConsumption * (ledSavingsPercent / 100);
+                const lightingCostSavings = lightingEnergySavings * avgCostPerKWh;
+                totalEnergySavingsAmount += lightingCostSavings;
+
+                const co2Saved = lightingEnergySavings * CO2EmissionFactor;
+                totalCO2Saved += co2Saved;
+            }
+
+            // Cool Roof Intervention
+            if (document.getElementById('coolRoof').checked) {
+                const coolRoofCost = parseFloat(document.getElementById('coolRoofCost').value) || 0;
+                const coolRoofSavingsPercent = parseFloat(document.getElementById('coolRoofSavingsPercent').value) || 0;
+                totalInvestmentCost += coolRoofCost;
+
+                const energySavings = totalCalculatedConsumption * (coolRoofSavingsPercent / 100);
+                const costSavings = energySavings * avgCostPerKWh;
+
+                totalEnergySavingsAmount += costSavings;
+
+                const co2Saved = energySavings * CO2EmissionFactor;
+                totalCO2Saved += co2Saved;
+            }
+
+            // Wall Insulation Intervention
+            if (document.getElementById('wallInsulation').checked) {
+                const wallInsulationCost = parseFloat(document.getElementById('wallInsulationCost').value) || 0;
+                const wallInsulationSavingsPercent = parseFloat(document.getElementById('wallInsulationSavingsPercent').value) || 0;
+                totalInvestmentCost += wallInsulationCost;
+
+                const energySavings = totalCalculatedConsumption * (wallInsulationSavingsPercent / 100);
+                const costSavings = energySavings * avgCostPerKWh;
+
+                totalEnergySavingsAmount += costSavings;
+
+                const co2Saved = energySavings * CO2EmissionFactor;
+                totalCO2Saved += co2Saved;
+            }
+
+            // Reflective Windows Intervention
+            if (document.getElementById('reflectiveWindows').checked) {
+                const windowCost = parseFloat(document.getElementById('windowCost').value) || 0;
+                const numWindows = parseInt(document.getElementById('numWindows').value) || 0;
+                const windowSavingsPercent = parseFloat(document.getElementById('windowSavingsPercent').value) || 0;
+                totalInvestmentCost += windowCost * numWindows;
+
+                const energySavings = totalCalculatedConsumption * (windowSavingsPercent / 100);
+                const costSavings = energySavings * avgCostPerKWh;
+
+                totalEnergySavingsAmount += costSavings;
+
+                const co2Saved = energySavings * CO2EmissionFactor;
+                totalCO2Saved += co2Saved;
+            }
+
+            const newEnergyCost = totalCalculatedCost - totalEnergySavingsAmount;
+            const paybackPeriod = totalEnergySavingsAmount > 0 ? totalInvestmentCost / totalEnergySavingsAmount : 'N/A';
+
+            // Ensure newEnergyCost is not negative
+            const adjustedNewEnergyCost = newEnergyCost >= 0 ? newEnergyCost : 0;
+
+            document.getElementById('totalInvestmentCost').textContent = totalInvestmentCost.toFixed(2);
+            document.getElementById('totalEnergySavings').textContent = totalEnergySavingsAmount.toFixed(2);
+            document.getElementById('newEnergyCost').textContent = adjustedNewEnergyCost.toFixed(2);
+            document.getElementById('paybackPeriod').textContent = isNaN(paybackPeriod) ? 'N/A' : paybackPeriod.toFixed(2);
+            document.getElementById('totalCO2Saved').textContent = totalCO2Saved.toFixed(2);
+
+            // Show results
+            document.getElementById('results').classList.remove('hidden');
+
+            // Generate charts
+            generateEnergyBreakdownChart(energyBreakdownData);
+            generatePaybackChart(totalInvestmentCost, totalEnergySavingsAmount);
+        }
+
+        function generateEnergyBreakdownChart(energyBreakdownData) {
+            const ctx = document.getElementById('energyBreakdownChart').getContext('2d');
+            const labels = energyBreakdownData.map(a => a.name);
+            const data = energyBreakdownData.map(a => a.consumption);
+
+            if (window.energyBreakdownChart instanceof Chart) {
+                window.energyBreakdownChart.destroy();
+            }
+
+            window.energyBreakdownChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)',
+                            'rgba(199, 199, 199, 0.8)',
+                            'rgba(83, 102, 255, 0.8)',
+                            'rgba(40, 159, 64, 0.8)',
+                            'rgba(210, 199, 199, 0.8)',
+                        ],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Energy Consumption Breakdown'
+                        },
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        }
+
+        function generatePaybackChart(totalInvestmentCost, annualSavings) {
+            const ctx = document.getElementById('paybackChart').getContext('2d');
+            const months = [];
+            const cumulativeSavings = [];
+            let totalSavings = 0;
+            const investmentCost = totalInvestmentCost;
+            const paybackMonths = annualSavings > 0 ? (investmentCost / annualSavings) * 12 : 0;
+            const totalMonths = Math.ceil(paybackMonths > 24 ? paybackMonths : 24);
+
+            for (let i = 1; i <= totalMonths; i++) {
+                months.push(`Month ${i}`);
+                totalSavings += (annualSavings / 12);
+                cumulativeSavings.push(totalSavings);
+            }
+
+            if (window.paybackChart instanceof Chart) {
+                window.paybackChart.destroy();
+            }
+
+            window.paybackChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Cumulative Savings (IQD)',
+                        data: cumulativeSavings,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false
+                    }, {
+                        label: 'Total Investment Cost (IQD)',
+                        data: new Array(totalMonths).fill(investmentCost),
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Payback Period Projection'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount (IQD)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Months'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetForm() {
+            // Reset all input fields to their default values
+            document.querySelectorAll('input').forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else {
+                    input.value = input.defaultValue;
+                }
+            });
+
+            // Reset selects
+            document.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0;
+            });
+
+            // Clear the results
+            document.getElementById('results').classList.add('hidden');
+            document.querySelectorAll('span').forEach(span => {
+                span.textContent = '0';
+            });
+
+            // Remove extra rows
+            const lightingTable = document.getElementById('lightingTable');
+            while (lightingTable.rows.length > 2) {
+                lightingTable.deleteRow(-1);
+            }
+            const applianceTable = document.getElementById('applianceTable');
+            while (applianceTable.rows.length > 3) {
+                applianceTable.deleteRow(-1);
+            }
+
+            // Clear charts
+            if (window.energyBreakdownChart instanceof Chart) {
+                window.energyBreakdownChart.destroy();
+            }
+            if (window.paybackChart instanceof Chart) {
+                window.paybackChart.destroy();
+            }
+
+            // Hide gap alert
+            document.getElementById('gapAlert').classList.add('hidden');
+
+            // Recalculate results
+            calculateResults();
+        }
+
+        // Add event listeners to all input fields for real-time updates
+        document.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('input', calculateResults);
+        });
+
+        // Add event listeners to existing rows
+        document.querySelectorAll('#lightingTable tr').forEach((row, index) => {
+            if (index > 0) { // Skip header row
+                addEventListenersToRow(row);
+            }
+        });
+        document.querySelectorAll('#applianceTable tr').forEach((row, index) => {
+            if (index > 0) { // Skip header row
+                addEventListenersToRow(row);
+            }
+        });
+        
+        // Ensure the initial calculations are performed
+        resetForm();
+    </script>
+</body>
+</html>
